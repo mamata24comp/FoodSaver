@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Dashboard – FoodSaver</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="dashboard.html">
+      <div class="brand-pill">🌱</div>
+      <span class="brand-name">Food<span>Saver</span></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+      <li><a href="inventory.html">🥗 Inventory</a></li>
+      <li><a href="addFood.html">➕ Add Grocery</a></li>
+    </ul>
+    <div class="nav-right">
+      <span id="navUser"></span>
+      <div class="bell-wrap">
+        <button class="bell-btn" onclick="location.href='inventory.html?f=expiring'" title="Expiring items">🔔</button>
+        <span class="bell-dot" id="bellDot"></span>
+      </div>
+      <button class="sign-out-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">📊 Overview</div>
+    <h1 id="greetMsg">Dashboard</h1>
+    <p>Your grocery snapshot at a glance</p>
+  </div>
+</div>
+
+<div class="container" style="padding-top:54px;padding-bottom:28px">
+
+  <!-- STAT CARDS -->
+  <div class="stats-row">
+    <div class="stat-card sc-green">
+      <div class="stat-stripe"></div>
+      <div class="stat-icon">📦</div>
+      <div class="stat-num" id="totalFoods">0</div>
+      <div class="stat-label">Total Items</div>
+    </div>
+    <div class="stat-card sc-orange">
+      <div class="stat-stripe"></div>
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-num" id="expiringSoon">0</div>
+      <div class="stat-label">Expiring Soon</div>
+    </div>
+    <div class="stat-card sc-red">
+      <div class="stat-stripe"></div>
+      <div class="stat-icon">🗑️</div>
+      <div class="stat-num" id="expiredFoods">0</div>
+      <div class="stat-label">Expired</div>
+    </div>
+    <div class="stat-card sc-blue">
+      <div class="stat-stripe"></div>
+      <div class="stat-icon">📅</div>
+      <div class="stat-num" id="weeklyItems">0</div>
+      <div class="stat-label">Weekly Items</div>
+    </div>
+  </div>
+
+  <!-- PUSH NOTIFICATION CARD -->
+  <div class="push-card">
+    <div class="push-icon">🔔</div>
+    <div class="push-content">
+      <h5>Background Push Notifications</h5>
+      <p>Get alerted automatically when food is about to expire — even with the browser minimised or tab closed.</p>
+      <span class="push-badge pb-off" id="pushBadge">🔴 Off — click Enable to get automatic alerts</span>
+    </div>
+    <div class="push-btns">
+      <button class="btn-enable-push" id="enablePushBtn" onclick="enablePush()">
+        🔔 Enable Notifications
+      </button>
+      <button class="btn-test-push" id="testPushBtn" onclick="testPush()" style="display:none">
+        🧪 Test Now
+      </button>
+    </div>
+  </div>
+
+  <!-- QUICK ACTIONS + TIPS -->
+  <div style="display:grid;grid-template-columns:1fr 1.45fr;gap:18px">
+
+    <div class="glass-card" style="padding:24px">
+      <div class="section-label" style="margin-bottom:14px">Quick Actions</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <a href="addFood.html" class="qa-item">
+          <div class="qa-icon">➕</div>
+          <div><p class="qa-text-lbl">Add New Grocery</p><p class="qa-text-sub">Track a new food item</p></div>
+          <span class="qa-arrow">›</span>
+        </a>
+        <a href="inventory.html" class="qa-item">
+          <div class="qa-icon">🥗</div>
+          <div><p class="qa-text-lbl">View Inventory</p><p class="qa-text-sub">See all your groceries</p></div>
+          <span class="qa-arrow">›</span>
+        </a>
+        <a href="inventory.html?f=expiring" class="qa-item">
+          <div class="qa-icon">⚡</div>
+          <div><p class="qa-text-lbl">Expiring Soon</p><p class="qa-text-sub">Items expiring in 5 days</p></div>
+          <span class="qa-arrow">›</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="glass-card" style="padding:24px">
+      <div class="section-label" style="margin-bottom:14px">💡 Food Saving Tips</div>
+      <div class="tips-box">
+        <div class="tip-row"><span class="tip-check">✅</span> Store fruits &amp; vegetables separately to slow ripening.</div>
+        <div class="tip-row"><span class="tip-check">✅</span> Use FIFO — First In, First Out for pantry shelves.</div>
+        <div class="tip-row"><span class="tip-check">✅</span> Freeze items 2 days before expiry to extend shelf life.</div>
+        <div class="tip-row"><span class="tip-check">✅</span> Plan weekly meals based on what's already in your fridge.</div>
+        <div class="tip-row"><span class="tip-check">✅</span> Enable push notifications to never miss an expiry alert.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="site-footer">🌱 FoodSaver — Reduce waste. Save money. Help the planet.</div>
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="script.js"></script>
+<script>
+  // checkAuth handles username display + auto-notifications
+  checkAuth();
+
+  async function loadDash() {
+    try {
+      const res = await fetch('/dashboard-data');
+      if (res.status === 401) { location.href = 'login.html'; return; }
+      const d = await res.json();
+      animCount('totalFoods',   d.total,        900);
+      animCount('expiringSoon', d.expiringSoon,  900);
+      animCount('expiredFoods', d.expired,       900);
+      animCount('weeklyItems',  d.weekly,        900);
+      if (d.expiringSoon > 0 || d.expired > 0) {
+        document.getElementById('bellDot').classList.add('show');
+      }
+    } catch(e) { console.error('Dashboard load failed:', e); }
+  }
+
+  loadDash();
+</script>
+</body>
+</html>

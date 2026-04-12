@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Add Grocery – FoodSaver</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="dashboard.html">
+      <div class="brand-pill">🌱</div>
+      <span class="brand-name">Food<span>Saver</span></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">📊 Dashboard</a></li>
+      <li><a href="inventory.html">🥗 Inventory</a></li>
+      <li><a href="addFood.html" class="active">➕ Add Grocery</a></li>
+    </ul>
+    <div class="nav-right">
+      <span id="navUser"></span>
+      <div class="bell-wrap">
+        <button class="bell-btn" onclick="location.href='inventory.html?f=expiring'">🔔</button>
+        <span class="bell-dot" id="bellDot"></span>
+      </div>
+      <button class="sign-out-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">➕ New Item</div>
+    <h1>Add Grocery</h1>
+    <p>Track a new food item in your inventory</p>
+  </div>
+</div>
+
+<div class="container" style="padding-top:54px;padding-bottom:60px">
+  <div class="form-card">
+
+    <!-- ALERT -->
+    <div id="alertBox"></div>
+
+    <!-- FOOD NAME -->
+    <div class="field">
+      <label class="field-label">
+        Food Name
+        <span class="unit-auto" id="autoTag">📦 <span id="autoUnitText">units</span></span>
+      </label>
+      <div class="input-group-custom">
+        <span class="input-prefix" id="foodEmoji">🍽️</span>
+        <input type="text" id="foodName" class="form-ctrl" placeholder="e.g. Rice, Milk, Bread, Apples…" oninput="onNameChange()">
+      </div>
+    </div>
+
+    <!-- QUANTITY + UNIT -->
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:18px">
+      <div>
+        <label class="field-label">Quantity</label>
+        <input type="number" id="foodQty" class="form-ctrl form-ctrl-plain" placeholder="e.g. 2" min="0.1" step="0.1">
+      </div>
+      <div>
+        <label class="field-label">Unit (auto-detected)</label>
+        <input type="text" id="foodUnit" class="form-ctrl form-ctrl-plain" readonly
+               style="background:var(--gray-50);color:var(--gray-500);font-family:'JetBrains Mono',monospace;cursor:not-allowed">
+      </div>
+    </div>
+
+    <!-- GROCERY TYPE -->
+    <div class="field">
+      <label class="field-label">Grocery Type</label>
+      <div class="type-grid">
+        <div class="type-opt active" id="optWeekly" onclick="pickType('weekly')">
+          <span class="type-opt-icon">📅</span>
+          <div>
+            <div class="type-opt-lbl">Weekly</div>
+            <div class="type-opt-sub">Consumed every week</div>
+          </div>
+        </div>
+        <div class="type-opt" id="optMonthly" onclick="pickType('monthly')">
+          <span class="type-opt-icon">🗓️</span>
+          <div>
+            <div class="type-opt-lbl">Monthly</div>
+            <div class="type-opt-sub">Consumed every month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATES -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+      <div>
+        <label class="field-label">Purchase Date</label>
+        <input type="date" id="purchaseDate" class="form-ctrl form-ctrl-plain">
+      </div>
+      <div>
+        <label class="field-label">Expiry Date</label>
+        <input type="date" id="expiryDate" class="form-ctrl form-ctrl-plain">
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div style="display:flex;gap:12px">
+      <button class="btn-primary-fs" style="flex:1;padding:14px;font-size:.93rem" id="addBtn" onclick="submitFood()">
+        ✅ Add to Inventory
+      </button>
+      <a href="inventory.html" class="btn-ghost-fs" style="padding:14px 20px">Cancel</a>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="script.js"></script>
+<script>
+  // ── Init ──
+  checkAuth();
+  document.getElementById('purchaseDate').value = new Date().toISOString().split('T')[0];
+
+  // ── FIX: Unit & icon detection on name input ──
+  function onNameChange() {
+    const nameVal = document.getElementById('foodName').value;
+    const unit    = detectUnit(nameVal);   // from script.js
+    const icon    = foodIcon(nameVal);     // from script.js
+
+    document.getElementById('foodUnit').value       = unit;
+    document.getElementById('foodEmoji').textContent = icon;
+    document.getElementById('autoUnitText').textContent = unit;
+
+    const tag = document.getElementById('autoTag');
+    if (nameVal.trim().length > 0) {
+      tag.classList.add('show');
+    } else {
+      tag.classList.remove('show');
+      document.getElementById('foodEmoji').textContent = '🍽️';
+    }
+  }
+
+  // ── Type selector ──
+  function pickType(val) {
+    document.getElementById('optWeekly').classList.toggle('active',  val === 'weekly');
+    document.getElementById('optMonthly').classList.toggle('active', val === 'monthly');
+  }
+
+  // ── FIX: Submit food with proper validation + error display ──
+  async function submitFood() {
+    const name         = document.getElementById('foodName').value.trim();
+    const qty          = document.getElementById('foodQty').value.trim();
+    const unit         = detectUnit(name);
+    const purchaseDate = document.getElementById('purchaseDate').value;
+    const expiryDate   = document.getElementById('expiryDate').value;
+    const type         = document.getElementById('optWeekly').classList.contains('active') ? 'weekly' : 'monthly';
+
+    // Validation
+    if (!name)         { showAlert('❌ Please enter a food name.', 'danger'); return; }
+    if (!qty || qty <= 0) { showAlert('❌ Please enter a valid quantity.', 'danger'); return; }
+    if (!purchaseDate) { showAlert('❌ Please select a purchase date.', 'danger'); return; }
+    if (!expiryDate)   { showAlert('❌ Please select an expiry date.', 'danger'); return; }
+    if (new Date(expiryDate) <= new Date(purchaseDate)) {
+      showAlert('❌ Expiry date must be after the purchase date.', 'danger'); return;
+    }
+
+    const btn = document.getElementById('addBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="sp"></span> Adding...';
+
+    try {
+      const res = await fetch('/foods', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          name,
+          quantity:     parseFloat(qty),
+          unit,
+          purchaseDate,
+          expiryDate,
+          type
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showAlert('✅ ' + name + ' added to inventory!', 'success');
+        setTimeout(() => location.href = 'inventory.html', 900);
+      } else {
+        showAlert('❌ ' + (data.message || 'Failed to add food. Try again.'), 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '✅ Add to Inventory';
+      }
+    } catch (e) {
+      showAlert('❌ Server error: ' + e.message + '. Is the server running?', 'danger');
+      btn.disabled = false;
+      btn.innerHTML = '✅ Add to Inventory';
+    }
+  }
+
+  function showAlert(msg, type) {
+    const styles = {
+      success: 'background:#dcfce7;color:#14532d;border:1px solid #bbf7d0',
+      danger:  'background:#fee2e2;color:#991b1b;border:1px solid #fecaca'
+    };
+    document.getElementById('alertBox').innerHTML =
+      `<div style="${styles[type]};border-radius:8px;padding:11px 14px;font-size:.87rem;margin-bottom:16px">${msg}</div>`;
+  }
+</script>
+<style>
+  .sp { display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;margin-right:7px;vertical-align:middle }
+  @keyframes sp { to { transform:rotate(360deg) } }
+</style>
+</body>
+</html>

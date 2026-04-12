@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Register – FoodSaver</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-icon-wrap">🌿</div>
+      <h2>Create Account</h2>
+      <p>Start reducing food waste today</p>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <div class="field">
+      <label class="field-label">Full Name</label>
+      <div class="input-group-custom">
+        <span class="input-prefix">👤</span>
+        <input type="text" id="username" class="form-ctrl" placeholder="John Doe">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Email Address</label>
+      <div class="input-group-custom">
+        <span class="input-prefix">📧</span>
+        <input type="email" id="email" class="form-ctrl" placeholder="you@example.com">
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:24px">
+      <label class="field-label">Password</label>
+      <div class="input-group-custom">
+        <span class="input-prefix">🔒</span>
+        <input type="password" id="password" class="form-ctrl" placeholder="Min. 6 characters">
+      </div>
+    </div>
+
+    <button class="btn-primary-fs full" id="regBtn" onclick="doRegister()">Create Account →</button>
+
+    <p style="text-align:center;margin-top:20px;font-size:.86rem;color:var(--gray-400)">
+      Already have an account? <a href="login.html" style="color:var(--green-700);font-weight:700;text-decoration:none">Sign in →</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  fetch('/me').then(r => r.json()).then(d => { if (d.loggedIn) location.href = 'dashboard.html'; });
+
+  async function doRegister() {
+    const name  = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pw    = document.getElementById('password').value;
+    if (!name || !email || !pw) { showAlert('Please fill in all fields.', 'danger'); return; }
+    if (pw.length < 6) { showAlert('Password must be at least 6 characters.', 'danger'); return; }
+
+    const btn = document.getElementById('regBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="sp"></span> Creating...';
+
+    try {
+      const res  = await fetch('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: name, email, password: pw }) });
+      const data = await res.json();
+      if (data.success) {
+        showAlert('✅ Account created! Redirecting to login...', 'success');
+        setTimeout(() => location.href = 'login.html', 1000);
+      } else {
+        showAlert('❌ ' + data.message, 'danger');
+        btn.disabled = false; btn.innerHTML = 'Create Account →';
+      }
+    } catch (e) {
+      showAlert('❌ Server error. Is the server running?', 'danger');
+      btn.disabled = false; btn.innerHTML = 'Create Account →';
+    }
+  }
+
+  function showAlert(msg, type) {
+    const colors = { success: '#dcfce7:#14532d:#bbf7d0', danger: '#fee2e2:#991b1b:#fecaca' };
+    const [bg, color, border] = colors[type].split(':');
+    document.getElementById('alertBox').innerHTML =
+      `<div style="background:${bg};color:${color};border:1px solid ${border};border-radius:8px;padding:10px 14px;font-size:.86rem;margin-bottom:14px">${msg}</div>`;
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+</script>
+<style>
+  .sp { display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;margin-right:6px;vertical-align:middle }
+  @keyframes sp { to { transform:rotate(360deg) } }
+</style>
+</body>
+</html>

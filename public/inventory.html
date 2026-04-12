@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Inventory – FoodSaver</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="dashboard.html">
+      <div class="brand-pill">🌱</div>
+      <span class="brand-name">Food<span>Saver</span></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">📊 Dashboard</a></li>
+      <li><a href="inventory.html" class="active">🥗 Inventory</a></li>
+      <li><a href="addFood.html">➕ Add Grocery</a></li>
+    </ul>
+    <div class="nav-right">
+      <span id="navUser"></span>
+      <div class="bell-wrap">
+        <button class="bell-btn" onclick="document.getElementById('expiryFilter').value='expiring';applyFilters()" title="Show expiring">🔔</button>
+        <span class="bell-dot" id="bellDot"></span>
+      </div>
+      <button class="sign-out-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">🥗 Inventory</div>
+    <h1>Food Inventory</h1>
+    <p>Track, manage and monitor all your grocery items</p>
+  </div>
+</div>
+
+<div class="container" style="padding-top:54px;padding-bottom:28px">
+
+  <div id="alertArea"></div>
+
+  <div class="filter-bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="searchInput" placeholder="Search groceries..." oninput="applyFilters()">
+    </div>
+    <select class="form-select-custom" id="typeFilter" onchange="applyFilters()" style="height:40px;min-width:140px">
+      <option value="all">All Types</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+    </select>
+    <select class="form-select-custom" id="expiryFilter" onchange="applyFilters()" style="height:40px;min-width:160px">
+      <option value="all">All Items</option>
+      <option value="expiring">Expiring Soon ≤5d</option>
+      <option value="fresh">Fresh Items</option>
+      <option value="expired">Expired</option>
+    </select>
+    <span class="count-chip" id="countChip">0 items</span>
+  </div>
+
+  <div id="foodList"></div>
+
+</div>
+
+<div class="site-footer">🌱 FoodSaver — Reduce waste. Save money. Help the planet.</div>
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="script.js"></script>
+<script>
+  checkAuth();
+  // Pre-set filter from URL param
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('f') === 'expiring') document.getElementById('expiryFilter').value = 'expiring';
+  if (p.get('f') === 'expired')  document.getElementById('expiryFilter').value = 'expired';
+  loadFoods();
+</script>
+</body>
+</html>
