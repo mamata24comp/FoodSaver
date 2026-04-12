@@ -41,6 +41,8 @@
   </div>
 </div>
 
+// login UI added
+
 <script>
   // Redirect if already logged in
   fetch('/me').then(r => r.json()).then(d => { if (d.loggedIn) location.href = 'dashboard.html'; });
