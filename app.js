@@ -127,7 +127,7 @@ app.post('/push/test', auth, async (req, res) => {
 });
 
 /* ── EXPIRY SCHEDULER (runs every hour) ── */
-// Change made by Angelin
+//Added expiry alert comment
 async function checkExpiryAndNotify() {
   if (!webpush||!pushSubs.length) return;
   try {
