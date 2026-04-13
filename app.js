@@ -73,6 +73,8 @@ app.get('/me', (req, res) => req.session.userId
   : res.json({ loggedIn:false }));
 
 /* ── FOODS ── */
+//Test commit//
+
 app.post('/foods', auth, async (req, res) => {
   try { await Food.create({ ...req.body, userId:req.session.userId }); res.json({ success:true }); }
   catch(e) { res.json({ success:false, message:'Failed' }); }
@@ -125,6 +127,7 @@ app.post('/push/test', auth, async (req, res) => {
 });
 
 /* ── EXPIRY SCHEDULER (runs every hour) ── */
+//Added expiry alert comment
 async function checkExpiryAndNotify() {
   if (!webpush||!pushSubs.length) return;
   try {
