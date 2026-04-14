@@ -158,3 +158,4 @@ setTimeout(checkExpiryAndNotify, 20000);    // 20s after start
 app.listen(3000, () => {
   console.log('🚀 FoodSaver → http://localhost:3000/login.html');
 });
+// minor updategit add .
